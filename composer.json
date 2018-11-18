@@ -1,0 +1,38 @@
+{
+    "name": "phpsed/cache",
+    "description": "Symfony controller response cache",
+    "license": "MIT",
+    "type": "symfony-bundle",
+    "keywords": [
+        "phpsed",
+        "redis",
+        "cache",
+        "symfony"
+    ],
+    "require": {
+        "php": "^7.1.3",
+        "symfony/dependency-injection": "*",
+        "symfony/config": "*",
+        "doctrine/annotations": "^1.6",
+        "symfony/cache": "*",
+        "symfony/http-kernel": "*",
+        "symfony/http-foundation": "*",
+        "snc/redis-bundle": "^2.1",
+        "symfony/event-dispatcher": "*"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Phpsed\\Cache\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "extra": {
+        "symfony": {
+            "require": "4.1.*"
+        }
+    }
+}
