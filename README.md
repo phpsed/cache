@@ -1,5 +1,10 @@
 # phpsed/cache
 
+[![Latest Stable Version](https://poser.pugx.org/phpsed/cache/v/stable?format=flat-square)](https://packagist.org/packages/phpsed/cache)
+[![Latest Unstable Version](https://poser.pugx.org/phpsed/cache/v/unstable?format=flat-square)](https://packagist.org/packages/phpsed/cache)
+[![License](https://poser.pugx.org/phpsed/cache/license?format=flat-square)](https://packagist.org/packages/phpsed/cache)
+[![Total Downloads](https://poser.pugx.org/phpsed/cache/downloads?format=flat-square)](https://packagist.org/packages/phpsed/cache)  
+
 Phpsed cache is annotation based controller response cache for Symfony framework.
 It generates route specific key from GET and POST parameters and saves it in provided cache clients.  
 
@@ -14,12 +19,15 @@ phpsed_cache:
 ```
 **enabled** parameter by default is set to false, which means that @Cache annotation won't work without setting it to true.  
 **providers** must be either Predis or Doctrine Orm clients.  
-As shown in the example above, two providers are provided:   
+In the example above, two providers are provided:   
 Predis client from snc/redis-bundle - snc_redis.session and Doctrine entity manager - doctrine.orm.default_entity_manager.  
 
 If **enabled** parameters is set as true, at least one valid provider must be provided.
 
-All of given providers will be chained in given order. Cache is returned from first provider that has needed key.   
+Phpsed\Cache uses Symfony\Cache [ChainAdapter][1]
+```text
+When an item is not found in the first adapter but is found in the next ones, this adapter ensures that the fetched item is saved to all the adapters where it was previously missing.
+```
 ***
 ```php
 use Phpsed\Cache\Annotation\Cache;
@@ -49,3 +57,5 @@ PS-CACHE: PS-CACHE-DISABLE
 ```
 In order to invalidate and delete the cache for endpoint, you must call this endpoint with specific header.
 For this you need to set **PS-CACHE** header with **PS-CACHE-DISABLE** value.
+
+[1]: https://symfony.com/doc/current/components/cache/adapters/chain_adapter.html
