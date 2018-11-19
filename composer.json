@@ -1,24 +1,29 @@
 {
     "name": "phpsed/cache",
-    "description": "Symfony controller response cache",
+    "description": "Symfony response cache",
     "license": "MIT",
     "type": "symfony-bundle",
     "keywords": [
         "phpsed",
-        "redis",
         "cache",
-        "symfony"
+        "symfony",
+        "redis",
+        "doctrine"
     ],
     "require": {
         "php": "^7.1.3",
-        "symfony/dependency-injection": "*",
-        "symfony/config": "*",
-        "doctrine/annotations": "^1.6",
         "symfony/cache": "*",
-        "symfony/http-kernel": "*",
+        "symfony/config": "*",
+        "symfony/dependency-injection": "*",
+        "symfony/event-dispatcher": "*",
         "symfony/http-foundation": "*",
-        "snc/redis-bundle": "^2.1",
-        "symfony/event-dispatcher": "*"
+        "symfony/http-kernel": "*",
+        "doctrine/annotations": "^1.6",
+        "doctrine/orm": "^2.6",
+        "predis/client": "^1"
+    },
+    "suggest": {
+        "snc/redis-bundle": "For easier Predis client configuration"
     },
     "config": {
         "sort-packages": true
