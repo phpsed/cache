@@ -12,32 +12,22 @@
     ],
     "require": {
         "php": "^7.1.3",
-        "symfony/cache": "*",
-        "symfony/config": "*",
-        "symfony/dependency-injection": "*",
-        "symfony/event-dispatcher": "*",
-        "symfony/http-foundation": "*",
-        "symfony/http-kernel": "*",
-        "doctrine/annotations": "^1.6",
-        "doctrine/orm": "^2.6",
-        "predis/predis": "^1"
+        "symfony/cache": "~3.2|~4.0",
+        "symfony/config": "~3.2|~4.0",
+        "symfony/dependency-injection": "~3.2|~4.0",
+        "symfony/event-dispatcher": "~3.2|~4.0",
+        "symfony/http-foundation": "~3.2|~4.0",
+        "symfony/http-kernel": "~3.2|~4.0",
+        "doctrine/annotations": "~1.6",
+        "doctrine/orm": "~2.6",
+        "predis/predis": "~1.1"
     },
     "suggest": {
         "snc/redis-bundle": "For easier Predis client configuration"
     },
-    "config": {
-        "sort-packages": true
-    },
     "autoload": {
         "psr-4": {
             "Phpsed\\Cache\\": "src/"
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "extra": {
-        "symfony": {
-            "require": "4.1.*"
         }
     }
 }
