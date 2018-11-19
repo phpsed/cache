@@ -20,7 +20,7 @@
         "symfony/http-kernel": "*",
         "doctrine/annotations": "^1.6",
         "doctrine/orm": "^2.6",
-        "predis/client": "^1"
+        "predis/predis": "^1"
     },
     "suggest": {
         "snc/redis-bundle": "For easier Predis client configuration"
