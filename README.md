@@ -1,4 +1,4 @@
-#phpsed/cache
+# phpsed/cache
 
 Phpsed cache is annotation based controller response cache for Symfony framework.
 It generates route specific key from GET and POST parameters and saves it in provided cache clients.  
