@@ -1,0 +1,12 @@
+parameters:
+    phpsed.cache.listener.class: Phpsed\Cache\EventListener\CacheListener
+
+services:
+    phpsed.cache.listener:
+        class: '%phpsed.cache.listener.class%'
+        arguments:
+            - '@annotation_reader'
+            - '@service_container'
+        tags:
+            -
+                name: kernel.event_subscriber
