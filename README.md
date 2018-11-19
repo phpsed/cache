@@ -5,7 +5,7 @@ It generates route specific key from GET and POST parameters and saves it in pro
 
 Currently supported clients are Predis and DoctrineOrm.  
 ***
-```
+```yaml
 phpsed_cache:
     enabled: true|FALSE
     providers:
@@ -14,7 +14,7 @@ phpsed_cache:
 ```
 **enabled** parameter by default is set to false, which means that @Cache annotation won't work without setting it to true.  
 **providers** must be either Predis or Doctrine Orm clients.  
-As shown in example above, two providers are provided:   
+As shown in the example above, two providers are provided:   
 Predis client from snc/redis-bundle - snc_redis.session and Doctrine entity manager - doctrine.orm.default_entity_manager.  
 
 If **enabled** parameters is set as true, at least one valid provider must be provided.
@@ -35,17 +35,17 @@ By default @Cache annotation doesn't need any parameters.
 Without **attributes** parameter, cache key for route is made from all of GET and POST parameters.  
 Without **expires** parameter, cache is saved for unlimited ttl which means that it will be valid until deleted.  
 
-If same parameter exist in GET and POST, value of GET parameter will be used.   
+If the same parameter exist in GET and POST, value of GET parameter will be used.   
 
 @Cache annotation takes two optional parameters: expires and attributes.  
 **expires** sets maximum ttl for given cache.   
-In example above cache will be saved for 3600 seconds and after 3600 seconds it will be invalidated.  
-If **attributes** parameter is set and given attribute(s) exist in GET or POST parameters, 
+In the example above cache will be saved for 3600 seconds and after 3600 seconds it will be invalidated.  
+If the **attributes** parameter is set and given attribute(s) exist in GET or POST parameters, 
 only given parameters will be used in cache key. 
 Only valid attributes will be used in creation of key. If none of given attributes exist, key will be made without any parameters.
 ***
-```
+```yaml
 PS-CACHE: PS-CACHE-DISABLE
 ```
-In order to invalidate and delete cache for endpoint, you must call this endpoint with specific header.
+In order to invalidate and delete the cache for endpoint, you must call this endpoint with specific header.
 For this you need to set **PS-CACHE** header with **PS-CACHE-DISABLE** value.
