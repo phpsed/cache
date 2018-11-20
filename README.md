@@ -5,6 +5,8 @@
 [![License](https://poser.pugx.org/phpsed/cache/license?format=flat-square)](https://packagist.org/packages/phpsed/cache)
 [![Total Downloads](https://poser.pugx.org/phpsed/cache/downloads?format=flat-square)](https://packagist.org/packages/phpsed/cache)  
 
+## Someone made Medium article about this repository, check it out [here][2]!
+
 Phpsed cache is annotation based controller response cache for Symfony framework.
 It generates route specific key from GET and POST parameters and saves it in provided cache clients.  
 
@@ -59,3 +61,4 @@ In order to invalidate and delete the cache for endpoint, you must call this end
 For this you need to set **PS-CACHE** header with **PS-CACHE-DISABLE** value.
 
 [1]: https://symfony.com/doc/current/components/cache/adapters/chain_adapter.html
+[2]: https://medium.com/@k0d3r1s/phpsed-cache-423d0fefa68
