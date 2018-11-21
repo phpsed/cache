@@ -182,7 +182,7 @@ class CacheListener implements EventSubscriberInterface
         }
     }
 
-    private function setCache(string $key, $value, int $expires): void
+    private function setCache(string $key, $value, ?int $expires): void
     {
         $cache = $this->client->getItem($key);
         $cache->set($value);
