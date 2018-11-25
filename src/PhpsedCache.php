@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phpsed\Cache;
 
 use Phpsed\Cache\DependencyInjection\PhpsedCacheExtension;
@@ -9,15 +11,15 @@ class PhpsedCache extends Bundle
 {
     public function getContainerExtension()
     {
-        if ($this->extension === \null) {
+        if ($this->extension === null) {
             return new PhpsedCacheExtension();
         }
 
         return $this->extension;
     }
 
-    public function getParent(): ?string
+    public function getParent() : ?string
     {
-        return \null;
+        return null;
     }
 }

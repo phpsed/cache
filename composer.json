@@ -22,6 +22,13 @@
         "doctrine/orm": "~2.6",
         "predis/predis": "~1.1"
     },
+    "require-dev": {
+        "doctrine/coding-standard": "^5.0",
+        "friendsofphp/php-cs-fixer": "^2.13"
+    },
+    "config": {
+        "sort-packages": true
+    },
     "suggest": {
         "snc/redis-bundle": "For easier Predis client configuration"
     },
@@ -29,5 +36,9 @@
         "psr-4": {
             "Phpsed\\Cache\\": "src/"
         }
+    },
+    "scripts": {
+        "style": "vendor/bin/phpcs src/",
+        "style-fix": "vendor/bin/phpcbf src/"
     }
 }
