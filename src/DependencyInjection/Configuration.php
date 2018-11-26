@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Phpsed\Cache\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -7,13 +9,22 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string
+     */
     private $alias;
 
+    /**
+     * @param string $alias
+     */
     public function __construct(string $alias)
     {
         $this->alias = $alias;
     }
 
+    /**
+     * @return TreeBuilder
+     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder();
@@ -24,7 +35,8 @@ class Configuration implements ConfigurationInterface
             ->canBeEnabled()
             ->children()
             ->arrayNode('providers')
-                ->variablePrototype()->end()
+                ->variablePrototype()
+                ->end()
             ->end()
         ->end();
         // @formatter:on
@@ -32,6 +44,9 @@ class Configuration implements ConfigurationInterface
         return $treeBuilder;
     }
 
+    /**
+     * @return string
+     */
     public function getAlias(): string
     {
         return $this->alias;

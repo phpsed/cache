@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Phpsed\Cache\DependencyInjection;
 
+use Exception;
 use Phpsed\Cache\Annotation\Cache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -11,14 +14,30 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class PhpsedCacheExtension extends Extension
 {
+    /**
+     * @var string
+     */
     public const ALIAS = 'phpsed.cache';
+
+    /**
+     * @var string
+     */
     public const EXTENSION = 'phpsed_cache';
 
+    /**
+     * @return string
+     */
     public function getAlias(): string
     {
         return self::EXTENSION;
     }
 
+    /**
+     * @param array $configs
+     * @param ContainerBuilder $container
+     *
+     * @throws Exception
+     */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration($this->getAlias());
@@ -30,7 +49,7 @@ class PhpsedCacheExtension extends Extension
         $container->setParameter(\sprintf('%s.enabled', self::ALIAS), $enabled);
         if ($providers = $configs[0]['providers']) {
             $container->setParameter(\sprintf('%s.providers', self::ALIAS), $providers);
-        } elseif ($enabled === \true) {
+        } elseif (\true === $enabled) {
             throw new InvalidArgumentException(\sprintf('At least one provider must be configured to use %s annotation', Cache::class));
         }
     }

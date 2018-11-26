@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Phpsed\Cache\EventListener;
 
 use Doctrine\Common\Annotations\Reader;
+use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManagerInterface;
 use Phpsed\Cache\Annotation\Cache;
 use Phpsed\Cache\DependencyInjection\PhpsedCacheExtension;
 use Predis\Client;
+use Psr\Cache\InvalidArgumentException;
 use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\Cache\Adapter\ChainAdapter;
 use Symfony\Component\Cache\Adapter\PdoAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
@@ -21,7 +26,14 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 class CacheListener implements EventSubscriberInterface
 {
+    /**
+     * @var string
+     */
     public const CACHE_HEADER = 'PS-CACHE';
+
+    /**
+     * @var string
+     */
     public const DISABLE_CACHE = 'PS-CACHE-DISABLE';
 
     /**
@@ -39,6 +51,12 @@ class CacheListener implements EventSubscriberInterface
      */
     protected $enabled;
 
+    /**
+     * @param Reader $reader
+     * @param ContainerInterface $container
+     *
+     * @throws DBALException
+     */
     public function __construct(Reader $reader, ContainerInterface $container)
     {
         $this->enabled = $container->getParameter(\sprintf('%s.enabled', PhpsedCacheExtension::ALIAS));
@@ -47,6 +65,13 @@ class CacheListener implements EventSubscriberInterface
         $this->client->prune();
     }
 
+    /**
+     * @param ContainerInterface $container
+     * @param array $providers
+     *
+     * @return array
+     * @throws DBALException
+     */
     private function createAdapters(ContainerInterface $container, array $providers = []): array
     {
         $adapters = [];
@@ -70,54 +95,84 @@ class CacheListener implements EventSubscriberInterface
         return $adapters;
     }
 
+    /**
+     * @return array
+     */
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::CONTROLLER => ['onKernelController', -100],
+            KernelEvents::CONTROLLER => [
+                'onKernelController',
+                -100,
+            ],
             KernelEvents::RESPONSE => 'onKernelResponse',
             KernelEvents::REQUEST => 'onKernelRequest',
         ];
     }
 
+    /**
+     * @param FilterControllerEvent $event
+     *
+     * @throws InvalidArgumentException
+     * @throws ReflectionException
+     */
     public function onKernelController(FilterControllerEvent $event): void
     {
         if (!$this->check($event)) {
             return;
         }
 
+        if (!$this->client) {
+            return;
+        }
+
         if ($annotation = $this->getAnnotation($event)) {
-            if ($this->client) {
-                $annotation->setData($event->getRequest()->attributes->get('_route_params') + $event->getRequest()->request->all());
-                /* @var $annotation Cache */
-                $response = $this->getCache($annotation->getKey($event->getRequest()->get('_route')));
-                if (\null !== $response) {
-                    $event->setController(function() use ($response) {
-                        return $response;
-                    });
-                }
+            $annotation->setData($event->getRequest()->attributes->get('_route_params') + $event->getRequest()->request->all());
+            /* @var $annotation Cache */
+            $response = $this->getCache($annotation->getKey($event->getRequest()->get('_route')));
+            if (\null !== $response) {
+                $event->setController(function () use ($response) {
+                    return $response;
+                });
             }
         }
     }
 
+    /**
+     * @param KernelEvent $event
+     *
+     * @return bool
+     */
     private function check(KernelEvent $event): bool
     {
-        $result = \true;
-
         if (!$this->enabled) {
-            $result = \false;
-        } elseif (!$event->isMasterRequest()) {
-            $result = \false;
-        } elseif (\method_exists($event, 'getResponse') && $event->getResponse() && !$event->getResponse()->isSuccessful()) {
-            $result = \false;
-        } elseif (empty($controller = $this->getController($event))) {
-            $result = \false;
-        } elseif (!\class_exists($controller[0])) {
-            $result = \false;
+            return \false;
         }
 
-        return $result;
+        if (!$event->isMasterRequest()) {
+            return \false;
+        }
+
+        if (\method_exists($event, 'getResponse') && $event->getResponse() && !$event->getResponse()->isSuccessful()) {
+            return \false;
+        }
+
+        if (empty($controller = $this->getController($event))) {
+            return \false;
+        }
+
+        if (!\class_exists($controller[0])) {
+            return \false;
+        }
+
+        return \true;
     }
 
+    /**
+     * @param KernelEvent $event
+     *
+     * @return array
+     */
     private function getController(KernelEvent $event): array
     {
         if (\is_array($controller = \explode('::', $event->getRequest()->get('_controller'))) && isset($controller[1])) {
@@ -127,7 +182,13 @@ class CacheListener implements EventSubscriberInterface
         return [];
     }
 
-    private function getAnnotation(KernelEvent $event): ?Cache
+    /**
+     * @param KernelEvent $event
+     *
+     * @return mixed
+     * @throws ReflectionException
+     */
+    private function getAnnotation(KernelEvent $event)
     {
         $controller = $this->getController($event);
         $controllerClass = new ReflectionClass($controller[0]);
@@ -139,6 +200,12 @@ class CacheListener implements EventSubscriberInterface
         return \null;
     }
 
+    /**
+     * @param $key
+     *
+     * @return mixed|null
+     * @throws InvalidArgumentException
+     */
     private function getCache($key)
     {
         $cache = $this->client->getItem($key);
@@ -149,6 +216,12 @@ class CacheListener implements EventSubscriberInterface
         return \null;
     }
 
+    /**
+     * @param GetResponseEvent $event
+     *
+     * @throws InvalidArgumentException
+     * @throws ReflectionException
+     */
     public function onKernelRequest(GetResponseEvent $event): void
     {
         if (!$this->check($event)) {
@@ -166,6 +239,12 @@ class CacheListener implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param FilterResponseEvent $event
+     *
+     * @throws InvalidArgumentException
+     * @throws ReflectionException
+     */
     public function onKernelResponse(FilterResponseEvent $event): void
     {
         if (!$this->check($event)) {
@@ -182,6 +261,13 @@ class CacheListener implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param string $key
+     * @param $value
+     * @param int|null $expires
+     *
+     * @throws InvalidArgumentException
+     */
     private function setCache(string $key, $value, ?int $expires): void
     {
         $cache = $this->client->getItem($key);
