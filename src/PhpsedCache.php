@@ -10,6 +10,16 @@ use const null;
 class PhpsedCache extends Bundle
 {
     /**
+     * @var string
+     */
+    public const CACHE_HEADER = 'PS-CACHE';
+
+    /**
+     * @var string
+     */
+    public const DISABLE_CACHE = 'PS-CACHE-DISABLE';
+
+    /**
      * @return PhpsedCacheExtension|ExtensionInterface|null
      */
     public function getContainerExtension()

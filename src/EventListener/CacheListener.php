@@ -7,6 +7,7 @@ use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManagerInterface;
 use Phpsed\Cache\Annotation\Cache;
 use Phpsed\Cache\DependencyInjection\PhpsedCacheExtension;
+use Phpsed\Cache\PhpsedCache;
 use Predis\Client;
 use Psr\Cache\InvalidArgumentException;
 use ReflectionClass;
@@ -34,16 +35,6 @@ use const true;
 
 class CacheListener implements EventSubscriberInterface
 {
-    /**
-     * @var string
-     */
-    public const CACHE_HEADER = 'PS-CACHE';
-
-    /**
-     * @var string
-     */
-    public const DISABLE_CACHE = 'PS-CACHE-DISABLE';
-
     /**
      * @var string
      */
@@ -98,8 +89,7 @@ class CacheListener implements EventSubscriberInterface
                 } elseif ($instance instanceof EntityManagerInterface) {
                     $table = sprintf('%s_items', PhpsedCacheExtension::EXTENSION);
                     $adapter = new PdoAdapter($instance->getConnection(), '', 0, ['db_table' => $table]);
-                    $schema = $instance->getConnection()
-                        ->getSchemaManager();
+                    $schema = $instance->getConnection()->getSchemaManager();
                     if (!$schema->tablesExist([$table])) {
                         $adapter->createTable();
                     }
@@ -141,8 +131,7 @@ class CacheListener implements EventSubscriberInterface
         if ($annotation = $this->getAnnotation($event)) {
             $annotation->setData(self::getAttributes($event));
             /* @var $annotation Cache */
-            $response = $this->getCache($annotation->getKey($event->getRequest()
-                ->get(self::ROUTE)));
+            $response = $this->getCache($annotation->getKey($event->getRequest()->get(self::ROUTE)));
             if (null !== $response) {
                 $event->setController(function () use ($response) {
                     return $response;
@@ -162,8 +151,7 @@ class CacheListener implements EventSubscriberInterface
             return false;
         }
 
-        if (method_exists($event, 'getResponse') && $event->getResponse() && !$event->getResponse()
-                ->isSuccessful()) {
+        if (method_exists($event, 'getResponse') && $event->getResponse() && !$event->getResponse()->isSuccessful()) {
             return false;
         }
 
@@ -181,8 +169,7 @@ class CacheListener implements EventSubscriberInterface
      */
     private function getController(KernelEvent $event): array
     {
-        if (is_array($controller = explode('::', $event->getRequest()
-                ->get('_controller'))) && isset($controller[1])) {
+        if (is_array($controller = explode('::', $event->getRequest()->get('_controller'))) && isset($controller[1])) {
             return $controller;
         }
 
@@ -245,13 +232,12 @@ class CacheListener implements EventSubscriberInterface
             return;
         }
 
-        $disabled = $event->getRequest()->headers->get(self::CACHE_HEADER);
+        $disabled = $event->getRequest()->headers->get(PhpsedCache::CACHE_HEADER);
         if (null !== $disabled) {
             $headers = array_map('trim', explode(',', $disabled));
-            if (in_array(self::DISABLE_CACHE, $headers, true) && $annotation = $this->getAnnotation($event)) {
+            if (in_array(PhpsedCache::DISABLE_CACHE, $headers, true) && $annotation = $this->getAnnotation($event)) {
                 $annotation->setData(self::getAttributes($event));
-                $key = $annotation->getKey($event->getRequest()
-                    ->get(self::ROUTE));
+                $key = $annotation->getKey($event->getRequest()->get(self::ROUTE));
                 $this->client->deleteItem($key);
             }
         }
@@ -271,8 +257,7 @@ class CacheListener implements EventSubscriberInterface
 
         if ($annotation = $this->getAnnotation($event)) {
             $annotation->setData(self::getAttributes($event));
-            $key = $annotation->getKey($event->getRequest()
-                ->get(self::ROUTE));
+            $key = $annotation->getKey($event->getRequest()->get(self::ROUTE));
             $cache = $this->getCache($key);
             if (null === $cache) {
                 $this->setCache($key, $event->getResponse(), $annotation->getExpires());
