@@ -20,12 +20,4 @@ class PhpsedCache extends Bundle
 
         return $this->extension;
     }
-
-    /**
-     * @return string|null
-     */
-    public function getParent(): ?string
-    {
-        return null;
-    }
 }

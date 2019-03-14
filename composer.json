@@ -22,7 +22,8 @@
         "doctrine/dbal": "~2.6",
         "doctrine/orm": "~2.6",
         "predis/predis": "~1.1",
-        "psr/cache": "^1"
+        "psr/cache": "^1",
+        "vairogs/vairogs-utils": "~1.0"
     },
     "suggest": {
         "snc/redis-bundle": "For easier Predis client configuration"
