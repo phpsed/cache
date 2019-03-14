@@ -14,7 +14,7 @@ Currently supported clients are Predis and DoctrineOrm.
 ***
 ```yaml
 phpsed_cache:
-    enabled: true|FALSE
+    enabled: FALSE|true
     providers:
         - snc_redis.session
         - doctrine.orm.default_entity_manager
