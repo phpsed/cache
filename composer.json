@@ -10,6 +10,13 @@
         "redis",
         "doctrine"
     ],
+    "authors": [
+        {
+            "name": "phpsed",
+            "homepage": "https://github.com/phpsed",
+            "role": "Maintainer"
+        }
+    ],
     "require": {
         "php": "^7.1.3",
         "symfony/cache": "~3.2|~4.0",
