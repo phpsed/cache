@@ -19,6 +19,11 @@ class Cache
      */
     private const ALGORITHM = 'sha512';
 
+    public const GET = 'GET';
+    public const POST = 'POST';
+    public const USER = 'USER';
+    public const MIXED = 'MIXED';
+
     /**
      * @var integer
      */
@@ -33,6 +38,11 @@ class Cache
      * @var array
      */
     public $attributes = [];
+
+    /**
+     * @var string
+     */
+    public $strategy = self::MIXED;
 
     /**
      * @param string $prefix
@@ -70,6 +80,26 @@ class Cache
     public function setData($data): void
     {
         $this->data = $data;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getStrategy(): ?string
+    {
+        return $this->strategy;
+    }
+
+    /**
+     * @param string|null $strategy
+     *
+     * @return Cache
+     */
+    public function setStrategy(?string $strategy): Cache
+    {
+        $this->strategy = $strategy;
+
+        return $this;
     }
 
     /**

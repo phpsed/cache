@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\Reader;
 use Doctrine\DBAL\DBALException;
 use Doctrine\ORM\EntityManagerInterface;
 use Phpsed\Cache\Annotation\Cache;
+use Phpsed\Cache\Arrayable;
 use Phpsed\Cache\DependencyInjection\PhpsedCacheExtension;
 use Phpsed\Cache\PhpsedCache;
 use Predis\Client;
@@ -17,11 +18,12 @@ use Symfony\Component\Cache\Adapter\PdoAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\KernelEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use function array_map;
 use function class_exists;
 use function explode;
@@ -56,18 +58,28 @@ class CacheListener implements EventSubscriberInterface
     protected $enabled;
 
     /**
+     * @var TokenStorageInterface
+     */
+    protected $storage;
+
+    /**
      * @param Reader $reader
      * @param ContainerInterface $container
      *
      * @throws DBALException
      */
-    public function __construct(Reader $reader, ContainerInterface $container)
-    {
+    public function __construct(
+        Reader $reader,
+        ContainerInterface $container,
+        TokenStorageInterface $storage
+    ) {
         $this->enabled = $container->getParameter(sprintf('%s.enabled', PhpsedCacheExtension::ALIAS));
         if ($this->enabled) {
             $this->reader = $reader;
-            $this->client = new ChainAdapter($this->createAdapters($container, $container->getParameter(sprintf('%s.providers', PhpsedCacheExtension::ALIAS))));
+            $this->client = new ChainAdapter($this->createAdapters($container,
+                $container->getParameter(sprintf('%s.providers', PhpsedCacheExtension::ALIAS))));
             $this->client->prune();
+            $this->storage = $storage;
         }
     }
 
@@ -78,8 +90,10 @@ class CacheListener implements EventSubscriberInterface
      * @return array
      * @throws DBALException
      */
-    private function createAdapters(ContainerInterface $container, array $providers = []): array
-    {
+    private function createAdapters(
+        ContainerInterface $container,
+        array $providers = []
+    ): array {
         $adapters = [];
 
         foreach ($providers as $provider) {
@@ -117,23 +131,26 @@ class CacheListener implements EventSubscriberInterface
     }
 
     /**
-     * @param FilterControllerEvent $event
+     * @param ControllerEvent $event
      *
      * @throws InvalidArgumentException
      * @throws ReflectionException
      */
-    public function onKernelController(FilterControllerEvent $event): void
+    public function onKernelController(ControllerEvent $event): void
     {
         if (!$this->check($event)) {
             return;
         }
 
         if ($annotation = $this->getAnnotation($event)) {
-            $annotation->setData(self::getAttributes($event));
+            $annotation->setData($this->getAttributes($event));
             /* @var $annotation Cache */
             $response = $this->getCache($annotation->getKey($event->getRequest()->get(self::ROUTE)));
             if (null !== $response) {
-                $event->setController(function () use ($response) {
+                $event->setController(function () use
+                (
+                    $response
+                ) {
                     return $response;
                 });
             }
@@ -182,7 +199,7 @@ class CacheListener implements EventSubscriberInterface
      * @return mixed
      * @throws ReflectionException
      */
-    private function getAnnotation(KernelEvent $event)
+    private function getAnnotation(KernelEvent $event): ?Cache
     {
         $controller = $this->getController($event);
         $controllerClass = new ReflectionClass($controller[0]);
@@ -198,10 +215,36 @@ class CacheListener implements EventSubscriberInterface
      * @param KernelEvent $event
      *
      * @return array|mixed
+     * @throws ReflectionException
      */
-    private static function getAttributes(KernelEvent $event)
+    private function getAttributes(KernelEvent $event)
     {
-        return $event->getRequest()->attributes->get('_route_params') + $event->getRequest()->request->all();
+        $input = [];
+        if ($annotation = $this->getAnnotation($event)) {
+            $req = $event->getRequest();
+            switch ($annotation->getStrategy()) {
+                case Cache::GET:
+                    $input = $req->attributes->get('_route_params') + $req->query->all();
+                    break;
+                case Cache::POST:
+                    $input = $req->request->all();
+                    break;
+                case Cache::USER:
+                    if ($this->storage->getToken() && $this->storage->getToken()->getUser() instanceof Arrayable) {
+                        $input = $this->storage->getToken()->getUser()->toArray();
+                    }
+                    break;
+                case Cache::MIXED:
+                default:
+                    $input = $req->attributes->get('_route_params') + $req->query->all() + $req->request->all();
+                    if ($this->storage->getToken() && $this->storage->getToken()->getUser() instanceof Arrayable) {
+                        $input += $this->storage->getToken()->getUser()->toArray();
+                    }
+                    break;
+            }
+
+            return $input;
+        }
     }
 
     /**
@@ -221,12 +264,12 @@ class CacheListener implements EventSubscriberInterface
     }
 
     /**
-     * @param GetResponseEvent $event
+     * @param RequestEvent $event
      *
      * @throws InvalidArgumentException
      * @throws ReflectionException
      */
-    public function onKernelRequest(GetResponseEvent $event): void
+    public function onKernelRequest(RequestEvent $event): void
     {
         if (!$this->check($event)) {
             return;
@@ -236,7 +279,7 @@ class CacheListener implements EventSubscriberInterface
         if (null !== $disabled) {
             $headers = array_map('trim', explode(',', $disabled));
             if (in_array(PhpsedCache::DISABLE_CACHE, $headers, true) && $annotation = $this->getAnnotation($event)) {
-                $annotation->setData(self::getAttributes($event));
+                $annotation->setData($this->getAttributes($event));
                 $key = $annotation->getKey($event->getRequest()->get(self::ROUTE));
                 $this->client->deleteItem($key);
             }
@@ -244,19 +287,19 @@ class CacheListener implements EventSubscriberInterface
     }
 
     /**
-     * @param FilterResponseEvent $event
+     * @param ResponseEvent $event
      *
      * @throws InvalidArgumentException
      * @throws ReflectionException
      */
-    public function onKernelResponse(FilterResponseEvent $event): void
+    public function onKernelResponse(ResponseEvent $event): void
     {
         if (!$this->check($event)) {
             return;
         }
 
         if ($annotation = $this->getAnnotation($event)) {
-            $annotation->setData(self::getAttributes($event));
+            $annotation->setData($this->getAttributes($event));
             $key = $annotation->getKey($event->getRequest()->get(self::ROUTE));
             $cache = $this->getCache($key);
             if (null === $cache) {
@@ -272,8 +315,11 @@ class CacheListener implements EventSubscriberInterface
      *
      * @throws InvalidArgumentException
      */
-    private function setCache(string $key, $value, ?int $expires): void
-    {
+    private function setCache(
+        string $key,
+        $value,
+        ?int $expires
+    ): void {
         $cache = $this->client->getItem($key);
         $cache->set($value);
         $cache->expiresAfter($expires);

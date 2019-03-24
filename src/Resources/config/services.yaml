@@ -4,6 +4,7 @@ services:
         arguments:
             - '@annotation_reader'
             - '@service_container'
+            - '@security.token_storage'
         tags:
             -
                 name: kernel.event_subscriber
