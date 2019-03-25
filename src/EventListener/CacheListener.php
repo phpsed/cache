@@ -63,52 +63,52 @@ class CacheListener implements EventSubscriberInterface
     protected $storage;
 
     /**
+     * @var array
+     */
+    protected $providers;
+
+    /**
+     * CacheListener constructor.
+     *
      * @param Reader $reader
      * @param ContainerInterface $container
+     * @param TokenStorageInterface $storage
+     * @param array $providers
      *
      * @throws DBALException
      */
     public function __construct(
-        Reader $reader,
-        ContainerInterface $container,
-        TokenStorageInterface $storage
+        Reader $reader, ContainerInterface $container, TokenStorageInterface $storage, ...$providers
     ) {
         $this->enabled = $container->getParameter(sprintf('%s.enabled', PhpsedCacheExtension::ALIAS));
         if ($this->enabled) {
+            $this->providers = $providers;
             $this->reader = $reader;
-            $this->client = new ChainAdapter($this->createAdapters($container,
-                $container->getParameter(sprintf('%s.providers', PhpsedCacheExtension::ALIAS))));
+            $this->client = new ChainAdapter($this->createAdapters());
             $this->client->prune();
             $this->storage = $storage;
         }
     }
 
     /**
-     * @param ContainerInterface $container
-     * @param array $providers
-     *
      * @return array
      * @throws DBALException
      */
-    private function createAdapters(
-        ContainerInterface $container,
-        array $providers = []
-    ): array {
+    private function createAdapters(): array
+    {
         $adapters = [];
 
-        foreach ($providers as $provider) {
-            if ($instance = $container->get($provider)) {
-                if ($instance instanceof Client) {
-                    $adapters[] = new RedisAdapter($instance, '', 0);
-                } elseif ($instance instanceof EntityManagerInterface) {
-                    $table = sprintf('%s_items', PhpsedCacheExtension::EXTENSION);
-                    $adapter = new PdoAdapter($instance->getConnection(), '', 0, ['db_table' => $table]);
-                    $schema = $instance->getConnection()->getSchemaManager();
-                    if (!$schema->tablesExist([$table])) {
-                        $adapter->createTable();
-                    }
-                    $adapters[] = $adapter;
+        foreach ($this->providers as $provider) {
+            if ($provider instanceof Client) {
+                $adapters[] = new RedisAdapter($provider, '', 0);
+            } elseif ($provider instanceof EntityManagerInterface) {
+                $table = sprintf('%s_items', PhpsedCacheExtension::EXTENSION);
+                $adapter = new PdoAdapter($provider->getConnection(), '', 0, ['db_table' => $table]);
+                $schema = $provider->getConnection()->getSchemaManager();
+                if (!$schema->tablesExist([$table])) {
+                    $adapter->createTable();
                 }
+                $adapters[] = $adapter;
             }
         }
 
@@ -147,8 +147,7 @@ class CacheListener implements EventSubscriberInterface
             /* @var $annotation Cache */
             $response = $this->getCache($annotation->getKey($event->getRequest()->get(self::ROUTE)));
             if (null !== $response) {
-                $event->setController(function () use
-                (
+                $event->setController(function () use (
                     $response
                 ) {
                     return $response;
@@ -316,9 +315,7 @@ class CacheListener implements EventSubscriberInterface
      * @throws InvalidArgumentException
      */
     private function setCache(
-        string $key,
-        $value,
-        ?int $expires
+        string $key, $value, ?int $expires
     ): void {
         $cache = $this->client->getItem($key);
         $cache->set($value);

@@ -38,11 +38,6 @@ class Configuration implements ConfigurationInterface
         // @formatter:off
         $node
             ->canBeEnabled()
-            ->children()
-            ->arrayNode('providers')
-                ->variablePrototype()
-                ->end()
-            ->end()
         ->end();
         // @formatter:on
 
