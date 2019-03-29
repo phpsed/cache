@@ -1,5 +1,7 @@
 # phpsed/cache
 
+# README IS NOT UP TO DATE FOR 2.x-dev VERSION!
+
 [![Latest Stable Version](https://poser.pugx.org/phpsed/cache/v/stable?format=flat-square)](https://packagist.org/packages/phpsed/cache)
 [![Latest Unstable Version](https://poser.pugx.org/phpsed/cache/v/unstable?format=flat-square)](https://packagist.org/packages/phpsed/cache)
 [![License](https://poser.pugx.org/phpsed/cache/license?format=flat-square)](https://packagist.org/packages/phpsed/cache)
