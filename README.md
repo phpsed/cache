@@ -1,5 +1,9 @@
 # phpsed/cache
 
+---
+I don't have time to work on this anymore, so my friend is taking over: [nameisis/cache](https://github.com/nameisis/cache)
+---
+
 # README IS NOT UP TO DATE FOR 2.x-dev VERSION!
 
 [![Latest Stable Version](https://poser.pugx.org/phpsed/cache/v/stable?format=flat-square)](https://packagist.org/packages/phpsed/cache)
