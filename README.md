@@ -1,7 +1,7 @@
 # phpsed/cache
 
 ---
-I don't have time to work on this anymore, so my friend is taking over: [nameisis/cache](https://github.com/nameisis/cache)
+I don't have time to work on this anymore, so my friend is taking over: [vairogs/cache](https://github.com/vairogs/cache)
 ---
 
 # README IS NOT UP TO DATE FOR 2.x-dev VERSION!
